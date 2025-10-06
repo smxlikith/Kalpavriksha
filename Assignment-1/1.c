@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 #include "stack.h"
 
@@ -22,65 +23,59 @@ Precedence precedence(char c) {
     }
 }
 
-int Calculator(const char s[]) {
+void solve(IntStack *nums, CharStack *ops){
+    char op = popChar(ops);
+    int a = popInt(nums);
+    int b = popInt(nums);
+    switch(op){
+        case '+': pushInt(nums,b + a); break;
+        case '-': pushInt(nums,b - a); break;
+        case '*': pushInt(nums,b * a); break;
+        case '/':
+            if(a == 0){ printf("Error:\n\tDivision by zero.\n"); exit(0); }
+            pushInt(nums,b/a); break;
+    }
+}
+
+int calculator(const char s[]) {
     IntStack nums;
     CharStack ops;
     initIntStack(&nums);
     initCharStack(&ops);
 
     int size = strlen(s);
-    for(int i=0; i<size; i++){
-        if(s[i]!=' '){
-            if(isdigit((unsigned char)s[i])) {
+    for(int i = 0; i < size; i++){
+        if( ! isspace(s[i]) ){
+            if(isdigit((unsigned char) s[i])) {
                 int num = 0;
-                while(i<size && isdigit(s[i])) {
-                    num = num*10 + (s[i]-'0');
+                while(i < size && isdigit(s[i])) {
+                    num = num * 10 + (s[i] - '0');
                     i++;
                 }
                 i--;
                 pushInt(&nums, num);
-            } else if(s[i]=='+' || s[i]=='-' || s[i]=='*' || s[i]=='/') {
+            } else if(s[i] == '+' || s[i] == '-' || s[i] == '*' || s[i] == '/') {
                 while(!isEmptyChar(&ops) && precedence(peekChar(&ops)) >= precedence(s[i])) {
-                    char op = popChar(&ops);
-                    int a = popInt(&nums);
-                    int b = popInt(&nums);
-                    switch(op){
-                        case '+': pushInt(&nums,b+a); break;
-                        case '-': pushInt(&nums,b-a); break;
-                        case '*': pushInt(&nums,b*a); break;
-                        case '/':
-                            if(a==0){ printf("Division by zero.\n"); return -1; }
-                            pushInt(&nums,b/a); break;
-                    }
+                    solve(&nums, &ops);
                 }
                 pushChar(&ops, s[i]);
             } else {
-                printf("%c : Invalid Input\n", s[i]);
-                return -1;
+                printf("Error:\n\t%c : Invalid Input\n", s[i]);
+                exit(0);
             }           
         }
     }
 
     while(!isEmptyChar(&ops)) {
-        char op = popChar(&ops);
-        int a = popInt(&nums);
-        int b = popInt(&nums);
-        switch(op){
-            case '+': pushInt(&nums,b+a); break;
-            case '-': pushInt(&nums,b-a); break;
-            case '*': pushInt(&nums,b*a); break;
-            case '/':
-                if(a==0){ printf("Division by zero.\n"); return -1; }
-                pushInt(&nums,b/a); break;
-        }
+        solve(&nums, &ops);
     }
 
     return popInt(&nums);
 }
 
 int main(int argc, char *argv[]) {
-    if(argc>1){
-        int result = Calculator(argv[1]);
+    if(argc > 1){
+        int result = calculator(argv[1]);
 		printf("%d\n", result);
     } else {
         printf("No Input String Provided. Try again with an Input String.\n");
