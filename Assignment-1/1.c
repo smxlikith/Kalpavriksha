@@ -3,11 +3,22 @@
 #include <string.h>
 #include "stack.h"
 
-int precedence(char c) {
+
+typedef enum{
+    ADDITION = 1,
+    SUBSTRACTION = 1,
+    DIVISION = 2,
+    MULTIPLICATION = 2,
+    INVALID = -1,
+} Precedence;
+
+Precedence precedence(char c) {
     switch(c){
-        case '+': case '-': return 1;
-        case '*': case '/': return 2;
-        default: return -1;
+        case '+': return ADDITION;
+        case '-': return SUBSTRACTION;
+        case '*': return MULTIPLICATION;
+        case '/': return DIVISION;
+        default: return INVALID;
     }
 }
 
