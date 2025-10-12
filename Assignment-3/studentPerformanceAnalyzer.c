@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define MAX_CHAR 100
+#define MAX_STUDENTS 100
 #define MAX_SUBJECTS 3
 
 typedef enum {
@@ -79,7 +80,7 @@ void getUserInput(Student *student) {
     getMarks(student);
 }
 
-int getStudents(Student **students) {
+int getStudents(Student *students) {
     int N;
 
     printf("Enter the Number of Students: ");
@@ -89,14 +90,8 @@ int getStudents(Student **students) {
         exit(0);
     }
 
-    *students = calloc(N, sizeof(Student));
-    if (*students == NULL) {
-        printf("Unable to Allocate Memory At the Moment Try again Later.\n");
-        exit(0);
-    }
-
     for (int i = 0; i < N; i++) {
-        getUserInput(&(*students)[i]);
+        getUserInput(&students[i]);
     }
 
     return N;
@@ -142,11 +137,10 @@ void displayRollNums(int idx, int N, Student *students) {
 }
 
 int main() {
-    Student *students;
-    int N = getStudents(&students);
+    Student students[MAX_STUDENTS];
+    int N = getStudents(students);
     display(students, N);
     printf("List of Roll Numbers (via recursion): ");
     displayRollNums(0, N, students);
-    free(students);
     return 0;
 }
