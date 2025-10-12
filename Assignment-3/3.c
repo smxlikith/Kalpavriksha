@@ -14,11 +14,6 @@ typedef enum {
     INVALID
 } Grade;
 
-typedef enum {
-    SUCCESS,
-    FAILURE
-} Status;
-
 typedef struct {
     unsigned int rollNum;
     char name[MAX_CHAR];
@@ -51,29 +46,28 @@ void trimNewline(char *str) {
     }
 }
 
-Status getMarks(Student *student) {
+void getMarks(Student *student) {
     int totalMarks = 0;
     printf("Enter the Marks of the Student: \n");
 
     for (int i = 0; i < MAX_SUBJECTS; i++) {
         printf("\tEnter the Marks of Subject %d: ", i + 1);
         scanf("%d", &student->marks[i]);
-        if (student->marks[i] > 100) {
-            printf("Entered Invalid Marks, Exitting Try again.\n");
-            return FAILURE;
-        }
         getchar();
+        while (student->marks[i] > 100 || student->marks[i] < 0) {
+            printf("Entered Invalid Marks for Subject%d[%d], Enter valid Marks:", i, student->marks);
+            scanf("%d", &student->marks[i]);
+            getchar();
+        }
         totalMarks += student->marks[i];
     }
 
     student->totalMarks = totalMarks;
     student->averageMarks = (float)totalMarks / MAX_SUBJECTS;
     student->grade = getGrade(student->averageMarks);
-
-    return SUCCESS;
 }
 
-Status getUserInput(Student *student) {
+void getUserInput(Student *student) {
     printf("Enter the Roll No. of the Student: ");
     scanf("%d", &student->rollNum);
     getchar();
@@ -82,11 +76,7 @@ Status getUserInput(Student *student) {
     fgets(student->name, MAX_CHAR, stdin);
     trimNewline(student->name);
 
-    Status status = getMarks(student);
-    if (status == FAILURE) {
-        return FAILURE;
-    }
-    return SUCCESS;
+    getMarks(student);
 }
 
 int getStudents(Student **students) {
@@ -105,28 +95,27 @@ int getStudents(Student **students) {
         exit(0);
     }
 
-    Status status;
     for (int i = 0; i < N; i++) {
-        status = getUserInput(&(*students)[i]);
-        if (status == FAILURE) {
-            printf("Invalid User Input, Exiting...\n");
-            free(*students);
-            exit(0);
-        }
+        getUserInput(&(*students)[i]);
     }
 
     return N;
 }
 
 void printPerformance(Grade grade) {
-    if (grade != INVALID && grade != F) {
-        char stars[6] = "";
-        stars[5] = '\0';
-        for (int i = 0; i < 5 - (grade - 'A'); i++) {
-            stars[i] = '*';
-        }
-        printf("Performance: %s\n\n", stars);
-    } else {
+    if (grade != F) {
+        printf("Performance: ");
+    }
+
+    if (grade == A) {
+        printf("*****\n\n");
+    } else if (grade == B) {
+        printf("****\n\n");
+    } else if (grade == C) {
+        printf("***\n\n");
+    } else if (grade == D) {
+        printf("**\n\n");
+    } else if (grade == F) {
         printf("\n");
     }
 }
