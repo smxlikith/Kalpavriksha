@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#define MAX_VAL 255
 
 void swap(int* a, int* b) {
     int temp = *a;
@@ -12,7 +13,7 @@ int** generateMatrix(int size) {
     for (int i = 0; i < size; i++) {
         matrix[i] = calloc(size, sizeof(int));
         for (int j = 0; j < size; j++) {
-            matrix[i][j] = rand() % 256;
+            matrix[i][j] = rand() % (MAX_VAL + 1);
         }
     }
     return matrix;
@@ -45,16 +46,18 @@ int smoothing3x3(int i, int j, int size, int** matrix) {
     return currentSum / validNeighbors;
 }
 
-int** applySmoothing(int size, int** matrix) {
-    int** smoothedMatrix = calloc(size, sizeof(int*));
-
-    for (int i = 0; i < size; i++) {
-        smoothedMatrix[i] = calloc(size, sizeof(int));
-        for (int j = 0; j < size; j++) {
-            smoothedMatrix[i][j] = smoothing3x3(i, j, size, matrix);
-        }
+void applySmoothing(int i, int j, int size, int** matrix) {
+    if (i >= size || i < 0) {
+        return;
     }
-    return smoothedMatrix;
+    if (j >= size || j < 0) {
+        applySmoothing(i + 1, 0, size, matrix);
+        return;
+    }
+
+    int currentSmoothedValue = smoothing3x3(i, j, size, matrix);
+    applySmoothing(i, j + 1, size, matrix);
+    matrix[i][j] = currentSmoothedValue;
 }
 
 void display(int size, int** matrix) {
@@ -90,10 +93,9 @@ int main() {
     printf("\n");
 
     printf("smoothing the matrix\n");
-    int** smoothedMatrix = applySmoothing(size, matrix);
-    display(size, smoothedMatrix);
+    applySmoothing(0, 0, size, matrix);
+    display(size, matrix);
 
-    cleanUp(size, smoothedMatrix);
     cleanUp(size, matrix);
     return 0;
 }
