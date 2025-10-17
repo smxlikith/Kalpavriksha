@@ -10,8 +10,23 @@ void swap(int* a, int* b) {
 
 int** generateMatrix(int size) {
     int** matrix = calloc(size, sizeof(int*));
+
+    if (matrix == NULL) {
+        printf("Memory allocation failed\n");
+        exit(0);
+    }
+
     for (int i = 0; i < size; i++) {
         matrix[i] = calloc(size, sizeof(int));
+
+        if (matrix[i] == NULL) {
+            for (int k = 0; k > i; k++) {
+                free(matrix[k]);
+            }
+            printf("Memory allocation failed\n");
+            exit(0);
+        }
+
         for (int j = 0; j < size; j++) {
             matrix[i][j] = rand() % (MAX_VAL + 1);
         }
