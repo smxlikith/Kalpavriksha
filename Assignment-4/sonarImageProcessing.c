@@ -61,21 +61,7 @@ int calculate3x3NeighborsAverage(int i, int j, int size, int** matrix) {
     return currentSum / validNeighbors;
 }
 
-void applySmoothingRecursive(int i, int j, int size, int** matrix) {
-    if (i >= size || i < 0) {
-        return;
-    }
-    if (j >= size || j < 0) {
-        applySmoothingRecursive(i + 1, 0, size, matrix);
-        return;
-    }
-
-    int currentSmoothedValue = calculate3x3NeighborsAverage(i, j, size, matrix);
-    applySmoothingRecursive(i, j + 1, size, matrix);
-    *(*(matrix + i) + j) = currentSmoothedValue;
-}
-
-void applySmoothingNonRecursive(int size, int** matrix) {
+void applySmoothing(int size, int** matrix) {
     int* curr = calloc(size, sizeof(int));
     int* prev = calloc(size, sizeof(int));
 
@@ -125,12 +111,8 @@ int main() {
     printf("\n");
 
     printf("smoothing the matrix:\n");
-    applySmoothingRecursive(0, 0, size, matrix);
+    applySmoothing(size, matrix);
     displayMatrix(size, matrix);
-
-    // printf("smoothing the matrix Non-recursive:\n");
-    // applySmoothingNonRecursive(size, matrix);
-    // displayMatrix(size, matrix);
 
     cleanUp(size, matrix);
     return 0;
