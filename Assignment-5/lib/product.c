@@ -1,12 +1,13 @@
 #include "product.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 void init(int* size, Product** inventory) {
     int initialSize;
-    while (1) {
+    while (true) {
         printf("Enter initial number of products: ");
         if (getInt(&initialSize) == SUCCESS) {
             if (initialSize >= MIN_INIT_PRODUCT && initialSize <= MAX_INIT_PRODUCT) {
@@ -68,9 +69,9 @@ Status addNewProduct(int* currentSize, Product** inventory) {
     int ID;
     printf("Enter new product details:\n");
     if (handleMemoryAllocation(*currentSize + 1, inventory) == SUCCESS) {
-        while (1) {
+        while (true) {
             getProductId(&ID);
-            if (searchProductId(ID, currentSize, inventory) == FAILURE) {
+            if (searchProductId(ID, currentSize, *inventory) == -1) {
                 (*inventory)[*currentSize].id = ID;
                 break;
             }
@@ -85,52 +86,50 @@ Status addNewProduct(int* currentSize, Product** inventory) {
     return FAILURE;
 };
 
-Status viewAllProducts(int* currentSize, Product** inventory) {
+void viewAllProducts(int* currentSize, Product* inventory) {
     printf("========= PRODUCT LIST =========\n");
     if (*currentSize == 0) {
         printf("No Products in Inventory.\n");
     }
     for (int i = 0; i < *currentSize; i++) {
-        displayProduct((*inventory)[i]);
+        displayProduct(inventory[i]);
     }
-    return SUCCESS;
 }
 
-Status searchProductId(int ID, int* currentSize, Product** inventory) {
+int searchProductId(int ID, int* currentSize, Product* inventory) {
     for (int i = 0; i < *currentSize; i++) {
-        if ((*inventory)[i].id == ID) {
-            return SUCCESS;
+        if ((inventory)[i].id == ID) {
+            return i;
         }
     }
-    return FAILURE;
+    return -1;
 }
 
-Status searchProductById(int* currentSize, Product** inventory) {
-    int ID;
+Status searchProductById(int* currentSize, Product* inventory) {
+    int ID, idx;
     printf("Enter Product ID to search:\n");
     getProductId(&ID);
-    for (int i = 0; i < *currentSize; i++) {
-        if ((*inventory)[i].id == ID) {
-            printf("Products Found:\n");
-            displayProduct((*inventory)[i]);
-            return SUCCESS;
-        }
+    idx = searchProductId(ID, currentSize, inventory);
+    if (idx != -1) {
+        printf("Products Found:\n");
+        displayProduct(inventory[idx]);
+        return SUCCESS;
     }
     printf("No Product with ID %d.\n", ID);
     return FAILURE;
 }
 
-Status searchProductByName(int* currentSize, Product** inventory) {
+Status searchProductByName(int* currentSize, Product* inventory) {
     char name[MAX_CHAR_LENGTH];
     Status found = FAILURE;
     printf("Enter name to search (partial allowed):\n");
     getProductName(name);
     for (int i = 0; i < *currentSize; i++) {
-        if (matchString(name, (*inventory)[i].name) >= NAME_SEARCH_THRESHOLD) {
+        if (matchString(name, inventory[i].name) >= NAME_SEARCH_THRESHOLD) {
             if (found == FAILURE) {
                 printf("Products Found:\n");
             }
-            displayProduct((*inventory)[i]);
+            displayProduct(inventory[i]);
             found = SUCCESS;
         }
     }
@@ -140,7 +139,7 @@ Status searchProductByName(int* currentSize, Product** inventory) {
     return found;
 }
 
-Status searchProductByPriceRange(int* currentSize, Product** inventory) {
+Status searchProductByPriceRange(int* currentSize, Product* inventory) {
     float minPrice, maxPrice;
     Status found = FAILURE;
     printf("Enter the Min Price: ");
@@ -149,12 +148,12 @@ Status searchProductByPriceRange(int* currentSize, Product** inventory) {
     getFloat(&maxPrice);
 
     for (int i = 0; i < *currentSize; i++) {
-        float currentPrice = (*inventory)[i].price;
+        float currentPrice = inventory[i].price;
         if (currentPrice >= minPrice && currentPrice <= maxPrice) {
             if (found == FAILURE) {
                 printf("Products in price range:\n");
             }
-            displayProduct((*inventory)[i]);
+            displayProduct(inventory[i]);
             found = SUCCESS;
         }
     }
@@ -184,21 +183,17 @@ Status updateQuantity(int* currentSize, Product** inventory) {
 }
 
 Status deleteProduct(int* currentSize, Product** inventory) {
-    int ID;
-    Status deleted = FAILURE;
+    int ID, idx;
     printf("Enter Product ID to delete:\n");
     getProductId(&ID);
-    int j = 0;
-    for (int i = 0; i < *currentSize; i++) {
-        if ((*inventory)[i].id == ID) {
-            printf("Deleted the Following Item:");
-            displayProduct((*inventory)[i]);
-            deleted = SUCCESS;
-            break;
+    idx = searchProductId(ID, currentSize, *inventory);
+    if (idx != -1) {
+        printf("Deleted the Following Item:");
+        displayProduct((*inventory)[idx]);
+        for (int i = idx, j = idx + 1; j < *currentSize; i++, j++) {
+            (*inventory)[i] = (*inventory)[j];
         }
-        (*inventory)[j++] = (*inventory)[i];
-    }
-    if (deleted == FAILURE) {
+    } else {
         printf("No Product with ID %d.\n", ID);
         return FAILURE;
     }
@@ -206,7 +201,7 @@ Status deleteProduct(int* currentSize, Product** inventory) {
         free(*inventory);
         *inventory = NULL;
     } else {
-        if (handleMemoryAllocation(*currentSize - 1, inventory) == SUCCESS) {
+        if (handleMemoryAllocation(*currentSize - 1, inventory) == FAILURE) {
             printf("Error resizing inventory after deletion.\n");
             return FAILURE;
         };

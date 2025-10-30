@@ -1,8 +1,6 @@
 #ifndef PRODUCT_H
 #define PRODUCT_H
 
-#include "constraints.h"
-#include "status.h"
 #include "userInput.h"
 
 typedef struct {
@@ -22,15 +20,15 @@ void displayProduct(Product p);
 
 float matchString(char* s1, char* s2);
 
-Status viewAllProducts(int* currentSize, Product** inventory);
+void viewAllProducts(int* currentSize, Product* inventory);
 
-Status searchProductById(int* currentSize, Product** inventory);
+Status searchProductById(int* currentSize, Product* inventory);
 
-Status searchProductId(int id, int* currentSize, Product** inventory);
+int searchProductId(int id, int* currentSize, Product* inventory);
 
-Status searchProductByName(int* currentSize, Product** inventory);
+Status searchProductByName(int* currentSize, Product* inventory);
 
-Status searchProductByPriceRange(int* currentSize, Product** inventory);
+Status searchProductByPriceRange(int* currentSize, Product* inventory);
 
 Status updateQuantity(int* currentSize, Product** inventory);
 

@@ -15,19 +15,19 @@ void runInventoryMenu(int* currentSize, Product** inventory) {
                 addNewProduct(currentSize, inventory);
                 break;
             case 2:
-                viewAllProducts(currentSize, inventory);
+                viewAllProducts(currentSize, *inventory);
                 break;
             case 3:
                 updateQuantity(currentSize, inventory);
                 break;
             case 4:
-                searchProductById(currentSize, inventory);
+                searchProductById(currentSize, *inventory);
                 break;
             case 5:
-                searchProductByName(currentSize, inventory);
+                searchProductByName(currentSize, *inventory);
                 break;
             case 6:
-                searchProductByPriceRange(currentSize, inventory);
+                searchProductByPriceRange(currentSize, *inventory);
                 break;
             case 7:
                 deleteProduct(currentSize, inventory);
@@ -49,7 +49,7 @@ int main() {
     int currentInventorySize = 0;
     Product* inventory = NULL;
     init(&currentInventorySize, &inventory);
-    viewAllProducts(&currentInventorySize, &inventory);
+    viewAllProducts(&currentInventorySize, inventory);
     while (1) {
         runInventoryMenu(&currentInventorySize, &inventory);
     }

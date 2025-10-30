@@ -1,12 +1,13 @@
 #include "userInput.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 void clearInputBuffer() {
     int c;
-    while (1) {
+    while (true) {
         c = getchar();
         if (c == '\n' || c == EOF)
             break;
@@ -105,7 +106,7 @@ Status getString(char* IN) {
 }
 
 void getProductId(int* IN) {
-    while (1) {
+    while (true) {
         printf("Product ID: ");
         if (getInt(IN) == SUCCESS) {
             if (*IN >= MIN_PRODUCT_ID && *IN <= MAX_PRODUCT_ID) {
@@ -118,7 +119,7 @@ void getProductId(int* IN) {
 }
 
 void getProductName(char* IN) {
-    while (1) {
+    while (true) {
         printf("Product Name: ");
         if (getString(IN) == SUCCESS) {
             break;
@@ -127,7 +128,7 @@ void getProductName(char* IN) {
 }
 
 void getProductPrice(float* IN) {
-    while (1) {
+    while (true) {
         printf("Product price: ");
         if (getFloat(IN) == SUCCESS) {
             if (*IN >= MIN_PRODUCT_PRICE && *IN <= MAX_PRODUCT_PRICE) {
@@ -140,7 +141,7 @@ void getProductPrice(float* IN) {
 }
 
 void getProductQuantity(int* IN) {
-    while (1) {
+    while (true) {
         printf("Product Quantity: ");
         if (getInt(IN) == SUCCESS) {
             if (*IN >= MIN_PRODUCT_QUANTITY && *IN <= MAX_PRODUCT_QUANTITY) {
