@@ -13,4 +13,6 @@ void cd(FileNode* root, FileNode** cwd, char* path);
 void pwd(FileNode* cwd, int lvl);
 void ls(FileNode* root, FileNode* cwd, char* path);
 void df(int totalBlocks, Block* freeBlocksList);
+void exitVFS(Block* freeBlocksList, FileNode* root, int numberOfBlocks, char** virtualDisk);
+
 #endif

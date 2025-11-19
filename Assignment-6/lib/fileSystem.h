@@ -28,5 +28,4 @@ FileNode* initFileSystem();
 FileNode* createFileNode(FileNode* root, FileNode* cwd, bool isDirectory, char* path);
 FileNode* getChildFileNode(FileNode* cwd, char* fileName);
 FileNode* getFileNodeByPath(FileNode* root, FileNode* cwd, char* path);
-void closeFileSystem();
 #endif

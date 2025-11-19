@@ -30,6 +30,13 @@ char** initVirtualDisk(int numberOfBlocks) {
     return memory;
 }
 
+void freeVirtualDisk(char** virtualDisk, int numberOfBlocks) {
+    for (int i = 0; i < numberOfBlocks; i++) {
+        free(virtualDisk[i]);
+    }
+    free(virtualDisk);
+}
+
 Block* initMemoryBlocks(int numberOfBlocks, char** memoryBlocks) {
     Block* head = NULL;
     Block* curr = NULL;
@@ -130,10 +137,8 @@ void deallocateBlocks(Block** freeBlocksList, Block* allocatedBlocks) {
 void freeBlocks(Block* head) {
     Block* curr = head;
     do {
-        free(curr->data);
         curr = curr->next;
         free(curr->prev);
     } while (curr->next != head);
-    free(curr->data);
     free(curr);
 }

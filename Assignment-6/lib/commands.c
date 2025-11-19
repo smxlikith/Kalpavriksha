@@ -1,5 +1,7 @@
 #include "commands.h"
 
+#include "queue.h"
+
 void createFile(FileNode* root, FileNode* cwd, char* path) {
     if (createFileNode(root, cwd, false, path) != NULL) {
         printf("File Successfully created\n");
@@ -189,4 +191,38 @@ void df(int totalBlocks, Block* freeBlocksList) {
     printf("Used Blocks: %d\n", totalBlocks - unusedBlocks);
     printf("Free Blocks: %d\n", unusedBlocks);
     printf("Disk Usage: %.2f%%\n", (float)(totalBlocks - unusedBlocks) / totalBlocks * 100);
+}
+
+void exitVFS(Block* freeBlocksList, FileNode* root, int numberOfBlocks, char** virtualDisk) {
+    if (root == NULL) {
+        return;
+    }
+
+    printf("Memory released. Exiting program...\n");
+    Queue* q = initQueue(numberOfBlocks);
+    if (!q) {
+        printf("Failed to create queue!\n");
+        return;
+    }
+
+    enqueueQueue(q, root);
+
+    while (q->currSize > 0) {
+        FileNode* current = dequeueQueue(q);
+
+        if (current->isDirectory && current->children != NULL) {
+            FileNode* child = current->children;
+            do {
+                enqueueQueue(q, child);
+                child = child->next;
+            } while (child != current->children);
+        }
+        free(current->name);
+        free(current);
+    }
+
+    freeQueue(q);
+    freeBlocks(freeBlocksList);
+    freeVirtualDisk(virtualDisk, numberOfBlocks);
+    exit(0);
 }

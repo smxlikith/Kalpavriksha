@@ -56,10 +56,7 @@ void handleFunction(char** virtualDisk, Block** freeBlocksList, FileNode* root, 
     } else if (strcmp(args[0], "df") == 0) {
         df(totalBlocks, *freeBlocksList);
     } else if (strcmp(args[0], "exit") == 0) {
-        printf("Memory released. Exiting program...\n");
-        freeBlocks(*freeBlocksList);
-        free(virtualDisk);
-        exit(0);
+        exitVFS(*freeBlocksList, root, totalBlocks, virtualDisk);
     } else {
         printf("Error: Unknown command '%s'. Please check the syntax.\n", args[0]);
     }
