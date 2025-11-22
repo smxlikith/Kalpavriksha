@@ -17,45 +17,63 @@ char** splitPath(char* path, char* delim, int* count) {
 }
 
 char* getFileNameFromPath(char* path) {
-    char* last = strrchr(path, '/');
-
-    if (last == NULL) {
-        return path;
-    }
-
-    char* fileStart = (last) ? last + 1 : path;
-    int n = strlen(fileStart) + 1;
-
-    char* fileName = malloc(n);
-
+    const char* last = strrchr(path, '/');
+    const char* fileStart = last ? last + 1 : path;
+    char* fileName = strdup(fileStart);
     if (fileName == NULL) {
-        printf("Unable to allocate\n");
+        printf("Unable to allocate memory for file name\n");
         return NULL;
     }
-    strcpy(fileName, fileStart);
-    fileName[n] = '\0';
     return fileName;
 }
 
 char* getParentPathFromPath(char* path) {
-    char* last = strrchr(path, '/');
-
+    const char* last = strrchr(path, '/');
     if (last == NULL) {
-        return "\0";
+        char* empty = strdup("");
+        if (empty == NULL) {
+            return NULL;
+        }
+        return empty;
     }
-
     int n = last - path;
     char* parentPath = malloc(n + 1);
-
     if (parentPath == NULL) {
-        printf("Unable to allocate\n");
+        fprintf(stderr, "Unable to allocate memory for parent path\n");
         return NULL;
     }
-
-    strncpy(parentPath, path, n);
+    memcpy(parentPath, path, n);
     parentPath[n] = '\0';
-
     return parentPath;
+}
+
+bool canDelete(VFSObj* vfs, bool isDirectory, FileNode* file, char* path) {
+    if (file == NULL) {
+        printf("Error: no such file: %s\n", path);
+        return false;
+    }
+
+    if (isDirectory && !file->isDirectory) {
+        printf("Error: cannot write to '%s', it is a directory\n", path);
+        return false;
+    }
+
+    if (!isDirectory && file->isDirectory) {
+        printf("Error: failed to remove '%s': Not a file\n", path);
+        return false;
+    }
+
+    if (isDirectory && file == vfs->root) {
+        printf("Error: cannot remove root '/'\n", path);
+        return false;
+    }
+
+    if (isDirectory && file->children != NULL) {
+        printf("Error: failed to remove '%s': Directory not empty\n", path);
+        return false;
+    }
+
+    return true;
 }
 
 FileNode* createFileNode(FileNode* root, FileNode* cwd, bool isDirectory, char* path) {
@@ -91,10 +109,12 @@ FileNode* createFileNode(FileNode* root, FileNode* cwd, bool isDirectory, char* 
             printf("Error: Cannot create file '%s': No such directory '%s'\n", path, parentPath);
             return NULL;
         }
+        free(parentPath);
     }
 
     file = malloc(sizeof(FileNode));
     if (file == NULL) {
+        free(fileName);
         printf("Error: cannot create file. Unable to allocate memory at the moment. Try again...\n");
         return NULL;
     }
@@ -150,6 +170,7 @@ FileNode* getFileNodeByPath(FileNode* root, FileNode* cwd, char* path) {
     FileNode* curr = path[0] == '/' ? root : cwd;
     for (int i = 0; i < n; i++) {
         if (strcmp(".", components[i]) == 0) {
+            continue;
         } else if (strcmp("..", components[i]) == 0) {
             if (curr->parent != NULL) {
                 curr = curr->parent;
@@ -163,4 +184,8 @@ FileNode* getFileNodeByPath(FileNode* root, FileNode* cwd, char* path) {
         }
     }
     return curr;
+}
+
+void displayFileNode(FileNode* file) {
+    printf("name: %s\nisDir: %d\nchildren:%p\ncontent:%s\n\n", file->name, file->isDirectory, file->children, file->blocks);
 }

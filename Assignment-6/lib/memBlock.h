@@ -20,6 +20,7 @@ char** initVirtualDisk(int numberOfBlocks);
 void freeVirtualDisk(char** virtualDisk, int numberOfBlocks);
 Block* initMemoryBlocks(int numberOfBlocks, char** memoryBlocks);
 Block* allocateBlocks(Block** freeBlocksList, unsigned int size);
+void addBlocks(Block* newBlocks, Block* currBlocks);
 void deallocateBlocks(Block** freeBlocksList, Block* blocks);
 void freeBlocks(Block* blocks);
 #endif

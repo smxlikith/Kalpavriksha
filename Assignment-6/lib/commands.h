@@ -2,17 +2,17 @@
 #define COMMANDS_H
 #include "fileSystem.h"
 
-void createFile(FileNode* root, FileNode* cwd, char* path);
-void writeFile(FileNode* root, FileNode* cwd, Block** freeBlocksList, char* path, char* data);
-void readFile(FileNode* root, FileNode* cwd, char* path);
-void deleteFile(FileNode* root, FileNode* cwd, Block** freeBlocksList, char* path);
+void createFile(VFSObj* vfs, char* path);
+void writeFile(VFSObj* vfs, char* path, char* data);
+void readFile(VFSObj* vfs, char* path);
+void deleteFile(VFSObj* vfs, char* path);
 
-void mkdir(FileNode* root, FileNode* cwd, char* path);
-void rmdir(FileNode* root, FileNode* cwd, char* path);
-void cd(FileNode* root, FileNode** cwd, char* path);
+void mkdir(VFSObj* vfs, char* path);
+void rmdir(VFSObj* vfs, char* path);
+void cd(VFSObj* vfs, char* path);
 void pwd(FileNode* cwd, int lvl);
-void ls(FileNode* root, FileNode* cwd, char* path);
-void df(int totalBlocks, Block* freeBlocksList);
-void exitVFS(Block* freeBlocksList, FileNode* root, int numberOfBlocks, char** virtualDisk);
+void ls(VFSObj* vfs, char* path);
+void df(VFSObj* vfs);
+void exitVFS(VFSObj* vfs);
 
 #endif

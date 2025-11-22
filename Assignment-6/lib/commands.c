@@ -2,14 +2,14 @@
 
 #include "queue.h"
 
-void createFile(FileNode* root, FileNode* cwd, char* path) {
-    if (createFileNode(root, cwd, false, path) != NULL) {
+void createFile(VFSObj* vfs, char* path) {
+    if (createFileNode(vfs->root, *(vfs->cwd), false, path) != NULL) {
         printf("File Successfully created\n");
     }
 }
 
-void writeFile(FileNode* root, FileNode* cwd, Block** freeBlocksList, char* path, char* data) {
-    FileNode* file = getFileNodeByPath(root, cwd, path);
+void writeFile(VFSObj* vfs, char* path, char* data) {
+    FileNode* file = getFileNodeByPath(vfs->root, *vfs->cwd, path);
     if (file == NULL) {
         printf("Error: no such file: %s\n", path);
         return;
@@ -22,19 +22,37 @@ void writeFile(FileNode* root, FileNode* cwd, Block** freeBlocksList, char* path
 
     int n = strlen(data);
     if (file->blocks == NULL) {
-        file->blocks = allocateBlocks(freeBlocksList, n);
+        file->blocks = allocateBlocks(vfs->freeBlocksList, n);
     }
     Block* block = file->blocks;
+
+    Block* curr = block;
+    int required = n;
+    do {
+        required -= (BLOCK_SIZE - curr->currSize);
+        curr = curr->next;
+    } while (curr != block);
+
+    if (required > 0) {
+        Block* newBlocks = allocateBlocks(vfs->freeBlocksList, required);
+        if (newBlocks == NULL) {
+            printf("No memory available to allocate.\n");
+            return;
+        }
+        addBlocks(newBlocks, block);
+    }
+
     for (int i = 0; i < n; i += BLOCK_SIZE) {
         size_t copySize = strlen(data + i) > BLOCK_SIZE ? BLOCK_SIZE : strlen(data + i);
         strncpy(block->data + block->currSize, data + i, copySize);
         block->currSize += copySize;
         block = block->next;
     }
+    printf("Data written successfully(size = %d bytes).\n", n);
 }
 
-void readFile(FileNode* root, FileNode* cwd, char* path) {
-    FileNode* file = getFileNodeByPath(root, cwd, path);
+void readFile(VFSObj* vfs, char* path) {
+    FileNode* file = getFileNodeByPath(vfs->root, *vfs->cwd, path);
 
     if (file == NULL) {
         printf("Error: no such file: %s\n", path);
@@ -61,20 +79,9 @@ void readFile(FileNode* root, FileNode* cwd, char* path) {
     } while (block != file->blocks);
 }
 
-void deleteFile(FileNode* root, FileNode* cwd, Block** freeBlocksList, char* path) {
-    FileNode* target = getFileNodeByPath(root, cwd, path);
-    if (target == NULL) {
-        printf("Error: failed to remove '%s': No such file or directory\n", path);
-        return;
-    }
-
-    if (target == root) {
-        printf("Error: cannot remove root '/'\n", path);
-        return;
-    }
-
-    if (target->isDirectory) {
-        printf("Error: failed to remove '%s': Not a file\n", path);
+void deleteFile(VFSObj* vfs, char* path) {
+    FileNode* target = getFileNodeByPath(vfs->root, *vfs->cwd, path);
+    if (!canDelete(vfs, false, target, path)) {
         return;
     }
 
@@ -87,42 +94,23 @@ void deleteFile(FileNode* root, FileNode* cwd, Block** freeBlocksList, char* pat
         target->prev->next = target->next;
         parent->children = target->next;
     }
-    deallocateBlocks(freeBlocksList, target->blocks);
+    deallocateBlocks(vfs->freeBlocksList, target->blocks);
     free(target);
+    printf("File deleted successfully.\n");
 }
 
-void mkdir(FileNode* root, FileNode* cwd, char* path) {
-    if (createFileNode(root, cwd, true, path) != NULL) {
+void mkdir(VFSObj* vfs, char* path) {
+    if (createFileNode(vfs->root, *vfs->cwd, true, path) != NULL) {
         printf("File Successfully created\n");
     }
 }
 
-void rmdir(FileNode* root, FileNode* cwd, char* path) {
-    FileNode* target = getFileNodeByPath(root, cwd, path);
-    if (target == NULL) {
-        printf("Error: failed to remove '%s': No such file or directory\n", path);
+void rmdir(VFSObj* vfs, char* path) {
+    FileNode* target = getFileNodeByPath(vfs->root, *vfs->cwd, path);
+    if (!canDelete(vfs, true, target, path)) {
         return;
     }
 
-    if (target == root) {
-        printf("Error: cannot remove root '/'\n", path);
-        return;
-    }
-
-    if (target == cwd) {
-        printf("Error: cannot delete %s, it is the current working directory.\n", path);
-        return;
-    }
-
-    if (!target->isDirectory) {
-        printf("Error: failed to remove '%s': Not a directory\n", path);
-        return;
-    }
-
-    if (target->children != NULL) {
-        printf("Error: failed to remove '%s': Directory not empty\n", path);
-        return;
-    }
     FileNode *parent = target->parent, *children = target->parent->children;
     if (target == target->next) {
         parent->children = NULL;
@@ -135,8 +123,8 @@ void rmdir(FileNode* root, FileNode* cwd, char* path) {
     free(target);
 }
 
-void cd(FileNode* root, FileNode** cwd, char* path) {
-    FileNode* target = getFileNodeByPath(root, *cwd, path);
+void cd(VFSObj* vfs, char* path) {
+    FileNode* target = getFileNodeByPath(vfs->root, *vfs->cwd, path);
     if (target == NULL) {
         printf("Error: no such file or directory: %s\n", path);
         return;
@@ -146,7 +134,7 @@ void cd(FileNode* root, FileNode** cwd, char* path) {
         printf("cd: not a directory: %s\n", path);
         return;
     }
-    *cwd = target;
+    *vfs->cwd = target;
 }
 
 void pwd(FileNode* cwd, int lvl) {
@@ -160,9 +148,9 @@ void pwd(FileNode* cwd, int lvl) {
     printf("/%s", cwd->name);
 }
 
-void ls(FileNode* root, FileNode* cwd, char* path) {
-    FileNode* target = getFileNodeByPath(root, cwd, path);
-    if (root == NULL) {
+void ls(VFSObj* vfs, char* path) {
+    FileNode* target = getFileNodeByPath(vfs->root, *vfs->cwd, path);
+    if (target == NULL) {
         printf("Error: cannot access '%s': No such file or directory\n", path);
     }
     FileNode* curr = target->children;
@@ -180,8 +168,11 @@ void ls(FileNode* root, FileNode* cwd, char* path) {
     }
 }
 
-void df(int totalBlocks, Block* freeBlocksList) {
+void df(VFSObj* vfs) {
     int unusedBlocks = 0;
+    Block* freeBlocksList = *vfs->freeBlocksList;
+    int totalBlocks = vfs->totalBlocks;
+
     Block* curr = freeBlocksList;
     do {
         unusedBlocks++;
@@ -193,19 +184,19 @@ void df(int totalBlocks, Block* freeBlocksList) {
     printf("Disk Usage: %.2f%%\n", (float)(totalBlocks - unusedBlocks) / totalBlocks * 100);
 }
 
-void exitVFS(Block* freeBlocksList, FileNode* root, int numberOfBlocks, char** virtualDisk) {
-    if (root == NULL) {
+void exitVFS(VFSObj* vfs) {
+    if (vfs->root == NULL) {
         return;
     }
 
     printf("Memory released. Exiting program...\n");
-    Queue* q = initQueue(numberOfBlocks);
+    Queue* q = initQueue(vfs->totalBlocks);
     if (!q) {
         printf("Failed to create queue!\n");
         return;
     }
 
-    enqueueQueue(q, root);
+    enqueueQueue(q, vfs->root);
 
     while (q->currSize > 0) {
         FileNode* current = dequeueQueue(q);
@@ -222,7 +213,7 @@ void exitVFS(Block* freeBlocksList, FileNode* root, int numberOfBlocks, char** v
     }
 
     freeQueue(q);
-    freeBlocks(freeBlocksList);
-    freeVirtualDisk(virtualDisk, numberOfBlocks);
+    freeBlocks(*vfs->freeBlocksList);
+    freeVirtualDisk(vfs->virtualDisk, vfs->totalBlocks);
     exit(0);
 }

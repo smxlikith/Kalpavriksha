@@ -10,18 +10,8 @@ void clearInputBuffer() {
     }
 }
 
-char** getUserInput(int* size, FileNode* cwd) {
-    int currArgs = 1;
-    char* input = malloc(MAX_CHAR_LENGTH);
-    char** args = malloc(currArgs * sizeof(char*));
-    char** temp;
-
-    if (args == NULL || input == NULL) {
-        printf("Memory Allocation Failed.\n");
-        exit(1);
-    }
-
-    printf("%s>", cwd->name);
+char* readInput() {
+    static char input[MAX_CHAR_LENGTH];
 
     if (fgets(input, MAX_CHAR_LENGTH, stdin) == NULL) {
         return NULL;
@@ -34,59 +24,31 @@ char** getUserInput(int* size, FileNode* cwd) {
     }
 
     input[strcspn(input, "\n")] = '\0';
+    return input;
+}
 
-    int N = strlen(input);
-    if (N == 0) {
-        return NULL;
+void tokenizeInput(char* input, char* args[]) {
+    int count = 0;
+    char* token = strtok(input, " ");
+    while (token != NULL && count < MAX_ARGS - 1) {
+        int len = strlen(token);
+        if ((token[0] == '"' && token[len - 1] == '"') ||
+            (token[0] == '\'' && token[len - 1] == '\'')) {
+            token[len - 1] = '\0';
+            token++;
+        }
+
+        args[count++] = token;
+        token = strtok(NULL, " ");
     }
-    int i = 0, j = 0;
-    char* arg = malloc(MAX_CHAR_LENGTH);
+    args[count] = NULL;
+}
 
-    while (i < N) {
-        while (i < N && input[i] == ' ') {
-            i++;
-        }
-
-        if (i == N) break;
-
-        if (input[i] == '\'' || input[i] == '"') {
-            char quote = input[i];
-            i++;
-            j = 0;
-
-            while (i < N && input[i] != quote) {
-                arg[j++] = input[i++];
-            }
-
-            if (i == N || input[i] != quote) {
-                printf("Error: Incomplete quotes. Please ensure that quotes are properly closed.\n");
-                free(arg);
-                return NULL;
-            }
-
-            i++;
-            arg[j] = '\0';
-            args[currArgs - 1] = strdup(arg);
-        } else {
-            j = 0;
-            while (i < N && input[i] != ' ' && input[i] != '\'' && input[i] != '"') {
-                arg[j++] = input[i++];
-            }
-            arg[j] = '\0';
-            args[currArgs - 1] = strdup(arg);
-        }
-
-        currArgs++;
-        temp = realloc(args, currArgs * sizeof(char*));
-        if (temp == NULL) {
-            printf("Memory Allocation Failed.\n");
-            exit(1);
-        }
-        args = temp;
+void getUserInput(char* args[], FileNode* cwd) {
+    printf("%s> ", cwd->name);
+    char* input = readInput();
+    if (input == NULL || strlen(input) == 0) {
+        return;
     }
-
-    args[currArgs - 1] = NULL;
-    *size = currArgs - 1;
-    free(arg);
-    return args;
+    tokenizeInput(input, args);
 }

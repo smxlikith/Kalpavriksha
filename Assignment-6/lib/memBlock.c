@@ -76,6 +76,10 @@ Block* allocateBlocks(Block** freeBlocksList, unsigned int size) {
     int numberOfBlocks = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
     Block *head = *freeBlocksList, *curr = head, *tail;
 
+    if (head == NULL) {
+        return NULL;
+    }
+
     if (numberOfBlocks == 1 && curr == curr->next) {
         *freeBlocksList = NULL;
         return curr;
@@ -132,6 +136,13 @@ void deallocateBlocks(Block** freeBlocksList, Block* allocatedBlocks) {
     tail->next = curr;
 
     *freeBlocksList = head;
+}
+
+void addBlocks(Block* newBlocks, Block* currBlocks) {
+    newBlocks->prev->next = currBlocks;
+    currBlocks->prev = newBlocks->prev;
+    currBlocks->prev->next = newBlocks;
+    newBlocks->prev = currBlocks->prev;
 }
 
 void freeBlocks(Block* head) {

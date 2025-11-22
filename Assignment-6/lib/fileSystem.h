@@ -21,6 +21,14 @@ struct FileNode {
     Block* blocks;
 };
 
+typedef struct {
+    char** virtualDisk;
+    Block** freeBlocksList;
+    FileNode* root;
+    FileNode** cwd;
+    int totalBlocks;
+} VFSObj;
+
 char** splitPath(char* path, char* delim, int* count);
 char* getFileNameFromPath(char* path);
 char* getParentPathFromPath(char* path);
@@ -28,4 +36,8 @@ FileNode* initFileSystem();
 FileNode* createFileNode(FileNode* root, FileNode* cwd, bool isDirectory, char* path);
 FileNode* getChildFileNode(FileNode* cwd, char* fileName);
 FileNode* getFileNodeByPath(FileNode* root, FileNode* cwd, char* path);
+
+bool canDelete(VFSObj* vfs, bool isDirectory, FileNode* file, char* path);
+void displayFileNode(FileNode* file);
+
 #endif
