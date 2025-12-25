@@ -6,6 +6,7 @@ Scheduler* initScheduler(int n, PCB** processes, KILLNode* killList) {
     scheduler->readyQueue = initQueue();
     scheduler->waitingQueue = initQueue();
     scheduler->terminatedQueue = initQueue();
+    scheduler->processesMap = initHashMap();
 
     scheduler->killList = killList;
     scheduler->timer = 0;
@@ -14,6 +15,7 @@ Scheduler* initScheduler(int n, PCB** processes, KILLNode* killList) {
 
     for (int i = 0; i < n; i++) {
         enqueue(scheduler->readyQueue, processes[i]);
+        putToMap(processes[i]->PID, processes[i], scheduler->processesMap);
     }
 
     return scheduler;
@@ -26,7 +28,16 @@ void killProcess(Scheduler* scheduler) {
 
     int pid = scheduler->killList->pid;
 
-    if (scheduler->runningProcess->PID == pid) {
+    PCB* target = getFromMap(pid, scheduler->processesMap);
+    if (target == NULL) {
+        KILLNode* temp = scheduler->killList;
+        scheduler->killList = scheduler->killList->next;
+        free(temp);
+        return;
+    }
+
+    if (scheduler->runningProcess &&
+        scheduler->runningProcess->PID == pid) {
         scheduler->runningProcess->completionTime = scheduler->timer;
         scheduler->runningProcess->status = STATUS_KILLED;
         enqueue(scheduler->terminatedQueue, scheduler->runningProcess);
@@ -66,7 +77,6 @@ void killProcess(Scheduler* scheduler) {
             if (curr->process->PID == pid) {
                 if (prev == NULL) {
                     scheduler->waitingQueue->head = curr->next;
-
                 } else {
                     prev->next = curr->next;
                 }
@@ -87,6 +97,8 @@ void killProcess(Scheduler* scheduler) {
             curr = curr->next;
         }
     }
+
+    deleteFromMap(pid, scheduler->processesMap);
 
     KILLNode* temp = scheduler->killList;
     scheduler->killList = scheduler->killList->next;
@@ -129,6 +141,7 @@ void freeScheduler(Scheduler* scheduler) {
     freeQueue(scheduler->readyQueue);
     freeQueue(scheduler->waitingQueue);
     freeQueue(scheduler->terminatedQueue);
+    freeMap(scheduler->processesMap);
 
     KILLNode* temp;
     while (scheduler->killList != NULL) {

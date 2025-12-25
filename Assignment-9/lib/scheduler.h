@@ -1,5 +1,6 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
+#include "hashMap.h"
 #include "queue.h"
 
 typedef struct {
@@ -7,6 +8,7 @@ typedef struct {
     Queue* waitingQueue;
     Queue* terminatedQueue;
     KILLNode* killList;
+    HashMap* processesMap;
     int timer;
     int currentProcessTimer;
     PCB* runningProcess;
